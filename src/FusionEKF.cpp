@@ -35,21 +35,32 @@ FusionEKF::FusionEKF() {
    * TODO: Finish initializing the FusionEKF.
    * TODO: Set the process and measurement noises
    */
-  // measurement matrix
-  H_laser = MatrixXd(2, 4);
-  H_laser << 1, 0, 0, 0,
-            0, 1, 0, 0;
-
+  // measurement matrix - laser
+  H_laser_ << 1, 0, 0, 0,
+              0, 1, 0, 0;
+  // measurement matrix - radar
+  Hj_ << Tools::CalculateJacobian(const VectorXd& x_state);
+  
+  //TO BE REMOVED
   // the initial transition matrix F_
-  F_laser = MatrixXd(4, 4);
-  F_laser << 1, 0, 1, 0,
+  F_laser_ = MatrixXd(4, 4);
+  F_laser_ << 1, 0, 1, 0,
             0, 1, 0, 1,
             0, 0, 1, 0,
             0, 0, 0, 1;
+  
+  F_radar_ = MatrixXd(4, 4);
+  F_radar_ << 1, 0, 1, 0,
+              0, 1, 0, 1,
+              0, 0, 1, 0,
+              0, 0, 0, 1;
 
   // set the acceleration noise components
-  noise_ax = 5;
-  noise_ay = 5;
+  noise_ax_laser = 5;
+  noise_ay_laser = 5;
+  
+  noise_ax_radar = 5;
+  noise_ay_radar = 5;
 
 }
 
