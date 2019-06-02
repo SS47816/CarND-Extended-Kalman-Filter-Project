@@ -14,7 +14,6 @@ using std::vector;
  */
 FusionEKF::FusionEKF() {
   is_initialized_ = false;
-
   previous_timestamp_ = 0;
 
   // initializing matrices
@@ -36,7 +35,21 @@ FusionEKF::FusionEKF() {
    * TODO: Finish initializing the FusionEKF.
    * TODO: Set the process and measurement noises
    */
+  // measurement matrix
+  H_laser = MatrixXd(2, 4);
+  H_laser << 1, 0, 0, 0,
+            0, 1, 0, 0;
 
+  // the initial transition matrix F_
+  F_laser = MatrixXd(4, 4);
+  F_laser << 1, 0, 1, 0,
+            0, 1, 0, 1,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
+
+  // set the acceleration noise components
+  noise_ax = 5;
+  noise_ay = 5;
 
 }
 
