@@ -60,7 +60,6 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   VectorXd h = VectorXd(3);
   h << rho, theta, rho_rate;
   VectorXd y = z - h;
-  MatrixXd H_ = Tools::CalculateJacobian(const VectorXd& x_);
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();

@@ -30,7 +30,7 @@ FusionEKF::FusionEKF() {
   R_radar_ << 0.09, 0, 0,
               0, 0.0009, 0,
               0, 0, 0.09;
-
+  
   /**
    * TODO: Finish initializing the FusionEKF.
    * TODO: Set the process and measurement noises
@@ -39,7 +39,7 @@ FusionEKF::FusionEKF() {
   H_laser_ << 1, 0, 0, 0,
               0, 1, 0, 0;
   // measurement matrix - radar
-  Hj_ << Tools::CalculateJacobian(const VectorXd& x_state); //TODO
+  // Hj_; 
 
 }
 
@@ -62,7 +62,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // first measurement
     cout << "EKF: " << endl;
     ekf_.x_ = VectorXd(4);
-    ekf_.x_ << 1, 1, 1, 1;
+    // ekf_.x_ << 1, 1, 1, 1;
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 
@@ -75,6 +75,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float velocity_x = rho_rate*cos(phi);
       float velocity_y = rho_rate*sin(phi);
       ekf_.x_ << position_x, position_y, velocity_x, velocity_y;
+      H_in = tools.CalculateJacobian(const VectorXd& ekf_.x_);
+      ekf_.R_ = R_radar_;
     }
     
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
@@ -83,17 +85,25 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
                  measurement_pack.raw_measurements_[1], 
                  0, 
                  0;
+      ekf_.H_ = H_laser_;
+      ekf_.R_ = R_laser_;
     }
-    
+    // initialize object covariance matrix P
     MatrixXd P_in = MatrixXd(4, 4);
     P_in << 1.0, 0.0, 0.0, 0.0,
             0.0, 1.0, 0.0, 0.0,
             0.0, 0.0, 1000.0, 0.0,
             0.0, 0.0, 0.0, 1000.0;
-    
-    KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
-                        MatrixXd &H_in, MatrixXd &R_in, MatrixXd &Q_in)
-
+    ekf_.P_ = P_in;
+    // initialize process covariance matrix Q
+    MatrixXd Q_in = MatrixXd(4, 4);
+    Q_in << 1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0;
+    ekf_.Q_ = Q_in;
+    // initialize time
+    previous_timestamp_ = measurement_pack.timestamp_;
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -110,28 +120,15 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
   // calculate the time elapse
-  double t = measurement_pack.timestamp_ - previous_t;
-  
+  double t = (measurement_pack.timestamp_ - previous_timestamp_)/1000000.0;
+  previous_timestamp_ = measurement_pack.timestamp_;
   // the initial transition matrix F_
-  F_laser_ = MatrixXd(4, 4);
-  F_laser_ << 1, 0, 1, 0,
-            0, 1, 0, 1,
-            0, 0, 1, 0,
-            0, 0, 0, 1;
-  
-  F_radar_ = MatrixXd(4, 4);
-  F_radar_ << 1, 0, 1, 0,
-              0, 1, 0, 1,
-              0, 0, 1, 0,
-              0, 0, 0, 1;
-  
-  // set the acceleration noise components
-  noise_ax_laser = 5;
-  noise_ay_laser = 5;
-  
-  noise_ax_radar = 5;
-  noise_ay_radar = 5;
-
+  F_in = MatrixXd(4, 4);
+  F_in << 1.0, 0.0, t, 0.0,
+          0.0, 1.0, 0.0, t,
+          0.0, 0.0, 1.0, 0.0,
+          0.0, 0.0, 0.0, 1.0;
+  ekf_.F_ = F_in;
   
   ekf_.Predict();
 
@@ -147,10 +144,13 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
-    kf_.R_ = R_radar;
+    kf_.R_ = R_radar_;
+    kf_.H_ = tools.CalculateJacobian(const VectorXd& ekf_.x_);;
     kf_.UpdateEKF(const VectorXd &z);
   } else {
     // TODO: Laser updates
+    kf_.R_ = R_laser_;
+    kf_.H_ = H_laser_;
     kf_.Update(const VectorXd &z);
   }
 
