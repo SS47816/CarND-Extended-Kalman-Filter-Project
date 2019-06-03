@@ -4,7 +4,7 @@
 #include "Eigen/Dense"
 
 class KalmanFilter {
- public:
+public:
   /**
    * Constructor
    */
@@ -25,7 +25,8 @@ class KalmanFilter {
    * @param Q_in Process covariance matrix
    */
   void Init(Eigen::VectorXd &x_in, Eigen::MatrixXd &P_in, Eigen::MatrixXd &F_in,
-            Eigen::MatrixXd &H_in, Eigen::MatrixXd &R_in, Eigen::MatrixXd &Q_in);
+            Eigen::MatrixXd &H_in, Eigen::MatrixXd &R_in,
+            Eigen::MatrixXd &Q_in);
 
   /**
    * Prediction Predicts the state and the state covariance
