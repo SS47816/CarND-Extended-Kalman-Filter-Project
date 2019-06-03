@@ -58,6 +58,13 @@ FusionEKF::FusionEKF() {
         0, 0, 0, 1;
   ekf_.F_ = F_in;
 
+  // initialize process covariance matrix Q
+  MatrixXd Q_in = MatrixXd(4, 4);
+  Q_in << 1.0, 0.0, 0.0, 0.0, 
+          0.0, 1.0, 0.0, 0.0, 
+          0.0, 0.0, 1.0, 0.0, 
+          0.0, 0.0, 0.0, 1.0;
+  ekf_.Q_ = Q_in;
 }
 
 /**
@@ -91,12 +98,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float position_y = rho * sin(phi);
       float velocity_x = rho_rate * cos(phi);
       float velocity_y = rho_rate * sin(phi);
-      if (fabs(position_x) < 0.0001) {
-        position_x = 0.0001;
-      }
-      if (fabs(position_y) < 0.0001) {
-        position_y = 0.0001;
-      }
+      // if (fabs(position_x) < 0.0001) {
+      //   position_x = 0.0001;
+      // }
+      // if (fabs(position_y) < 0.0001) {
+      //   position_y = 0.0001;
+      // }
       ekf_.x_ << position_x, position_y, velocity_x, velocity_y;
       MatrixXd H_in = tools.CalculateJacobian(ekf_.x_);
       ekf_.R_ = R_radar_;
@@ -104,27 +111,20 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       // TODO: Initialize state.
-      ekf_.x_ << measurement_pack.raw_measurements_[0],
-          measurement_pack.raw_measurements_[1], 0, 0;
+      ekf_.x_ <<  measurement_pack.raw_measurements_[0],
+                  measurement_pack.raw_measurements_[1], 
+                  0, 0;
       ekf_.H_ = H_laser_;
       ekf_.R_ = R_laser_;
     }
 
     // check if x, y are zeros
-    if (fabs(ekf_.x_[0]) < 0.0001) {
-      ekf_.x_[0] = 0.0001;
-    }
-    if (fabs(ekf_.x_[1]) < 0.0001) {
-      ekf_.x_[1] = 0.0001;
-    }
-    
-    // initialize process covariance matrix Q
-    //MatrixXd Q_in = MatrixXd(4, 4);
-    //Q_in << 1.0, 0.0, 0.0, 0.0, 
-    //        0.0, 1.0, 0.0, 0.0, 
-    //        0.0, 0.0, 1.0, 0.0, 
-    //        0.0, 0.0, 0.0, 1.0;
-    //ekf_.Q_ = Q_in;
+    // if (fabs(ekf_.x_[0]) < 0.0001) {
+    //   ekf_.x_[0] = 0.0001;
+    // }
+    // if (fabs(ekf_.x_[1]) < 0.0001) {
+    //   ekf_.x_[1] = 0.0001;
+    // }
 
     // initialize time
     previous_timestamp_ = measurement_pack.timestamp_;
@@ -161,7 +161,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   // set the acceleration noise components
   float noise_ax = 9;
   float noise_ay = 9;
-  // update covariance matrix Q
+  // update process covariance matrix Q
   MatrixXd Q_ = MatrixXd(4, 4);
   Q_ << dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
         0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
