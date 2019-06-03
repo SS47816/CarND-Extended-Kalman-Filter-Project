@@ -70,7 +70,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float velocity_x = rho_rate * cos(phi);
       float velocity_y = rho_rate * sin(phi);
       ekf_.x_ << position_x, position_y, velocity_x, velocity_y;
-      H_in = tools.CalculateJacobian(const VectorXd &ekf_.x_);
+      MatrixXd H_in = tools.CalculateJacobian(ekf_.x_);
       ekf_.R_ = R_radar_;
     }
 
@@ -120,7 +120,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   double t = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   previous_timestamp_ = measurement_pack.timestamp_;
   // the initial transition matrix F_
-  F_in = MatrixXd(4, 4);
+  MatrixXd F_in = MatrixXd(4, 4);
   F_in << 1.0, 0.0, t, 0.0, 0.0, 1.0, 0.0, t, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
       1.0;
   ekf_.F_ = F_in;
@@ -139,15 +139,15 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
-    kf_.R_ = R_radar_;
-    kf_.H_ = tools.CalculateJacobian(const VectorXd &ekf_.x_);
+    ekf_.R_ = R_radar_;
+    ekf_.H_ = tools.CalculateJacobian(ekf_.x_);
     ;
-    kf_.UpdateEKF(const VectorXd &z);
+    ekf_.UpdateEKF(const VectorXd &z);
   } else {
     // TODO: Laser updates
-    kf_.R_ = R_laser_;
-    kf_.H_ = H_laser_;
-    kf_.Update(const VectorXd &z);
+    ekf_.R_ = R_laser_;
+    ekf_.H_ = H_laser_;
+    ekf_.Update(z);
   }
 
   // print the output
