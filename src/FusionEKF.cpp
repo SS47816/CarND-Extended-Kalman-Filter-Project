@@ -57,7 +57,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // first measurement
     cout << "EKF: " << endl;
     ekf_.x_ = VectorXd(4);
-    // ekf_.x_ << 1, 1, 1, 1;
+    ekf_.x_ << 1, 1, 1, 1;
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates
@@ -83,10 +83,10 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     }
 
     // check if x, y are zeros
-    if (ekf_.x_[0] < 0.0001) {
+    if (fabs(ekf_.x_[0]) < 0.0001) {
       ekf_.x_[0] = 0.0001;
     }
-    if (ekf_.x_[1] < 0.0001) {
+    if (fabs(ekf_.x_[1]) < 0.0001) {
       ekf_.x_[1] = 0.0001;
     }
     // initialize object covariance matrix P
