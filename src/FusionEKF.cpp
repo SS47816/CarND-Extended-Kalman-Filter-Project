@@ -98,12 +98,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float position_y = rho * sin(phi);
       float velocity_x = rho_rate * cos(phi);
       float velocity_y = rho_rate * sin(phi);
-      // if (fabs(position_x) < 0.0001) {
-      //   position_x = 0.0001;
-      // }
-      // if (fabs(position_y) < 0.0001) {
-      //   position_y = 0.0001;
-      // }
+      
       ekf_.x_ << position_x, position_y, velocity_x, velocity_y;
       MatrixXd H_in = tools.CalculateJacobian(ekf_.x_);
       ekf_.R_ = R_radar_;
@@ -117,14 +112,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       ekf_.H_ = H_laser_;
       ekf_.R_ = R_laser_;
     }
-
-    // check if x, y are zeros
-    // if (fabs(ekf_.x_[0]) < 0.0001) {
-    //   ekf_.x_[0] = 0.0001;
-    // }
-    // if (fabs(ekf_.x_[1]) < 0.0001) {
-    //   ekf_.x_[1] = 0.0001;
-    // }
 
     // initialize time
     previous_timestamp_ = measurement_pack.timestamp_;

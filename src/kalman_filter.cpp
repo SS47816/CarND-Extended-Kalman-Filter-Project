@@ -61,6 +61,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   const float PI = 3.1415927;
   h << rho, theta, rho_rate;
   VectorXd y = z - h;
+  
   // normalise y[1]  
   if (y[1] > PI) {
     y[1] -= 2 * PI;
