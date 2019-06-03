@@ -58,8 +58,17 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   double theta = atan2(x_[1], x_[0]);
   double rho_rate = (x_[0] * x_[2] + x_[1] * x_[3]) / rho;
   VectorXd h = VectorXd(3);
+  const float PI = 3.1415927;
   h << rho, theta, rho_rate;
   VectorXd y = z - h;
+  // normalise y[1]  
+  if (y[1] > PI) {
+    y[1] -= 2 * PI;
+  } 
+  if (y[1] < -PI) {
+    y[1] += 2 * PI;
+  }
+
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
