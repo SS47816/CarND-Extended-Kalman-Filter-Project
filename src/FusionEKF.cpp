@@ -40,6 +40,24 @@ FusionEKF::FusionEKF() {
               0, 1, 0, 0;
   // measurement matrix - radar
   // Hj_;
+
+  // initialize object covariance matrix P
+  MatrixXd P_in = MatrixXd(4, 4);
+  P_in << 1.0, 0.0, 0.0, 0.0, 
+          0.0, 1.0, 0.0, 0.0, 
+          0.0, 0.0, 1000.0, 0.0, 
+          0.0, 0.0, 0.0, 1000.0;
+  ekf_.P_ = P_in;
+
+  // the initial transition matrix F_
+  MatrixXd F_in = MatrixXd(4, 4);
+  F_in = MatrixXd(4, 4);
+  F_in << 1, 0, 1, 0,
+        0, 1, 0, 1,
+        0, 0, 1, 0,
+        0, 0, 0, 1;
+  ekf_.F_ = F_in;
+
 }
 
 /**
@@ -99,20 +117,15 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     if (fabs(ekf_.x_[1]) < 0.0001) {
       ekf_.x_[1] = 0.0001;
     }
-    // initialize object covariance matrix P
-    MatrixXd P_in = MatrixXd(4, 4);
-    P_in << 1.0, 0.0, 0.0, 0.0, 
-            0.0, 1.0, 0.0, 0.0, 
-            0.0, 0.0, 1000.0, 0.0, 
-            0.0, 0.0, 0.0, 1000.0;
-    ekf_.P_ = P_in;
+    
     // initialize process covariance matrix Q
-    MatrixXd Q_in = MatrixXd(4, 4);
-    Q_in << 1.0, 0.0, 0.0, 0.0, 
-            0.0, 1.0, 0.0, 0.0, 
-            0.0, 0.0, 1.0, 0.0, 
-            0.0, 0.0, 0.0, 1.0;
-    ekf_.Q_ = Q_in;
+    //MatrixXd Q_in = MatrixXd(4, 4);
+    //Q_in << 1.0, 0.0, 0.0, 0.0, 
+    //        0.0, 1.0, 0.0, 0.0, 
+    //        0.0, 0.0, 1.0, 0.0, 
+    //        0.0, 0.0, 0.0, 1.0;
+    //ekf_.Q_ = Q_in;
+
     // initialize time
     previous_timestamp_ = measurement_pack.timestamp_;
     // done initializing, no need to predict or update
@@ -131,13 +144,30 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
   // calculate the time elapse
-  double t = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
+  double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   previous_timestamp_ = measurement_pack.timestamp_;
-  // the initial transition matrix F_
-  MatrixXd F_in = MatrixXd(4, 4);
-  F_in << 1.0, 0.0, t, 0.0, 0.0, 1.0, 0.0, t, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
-      1.0;
-  ekf_.F_ = F_in;
+  float dt_2 = dt * dt;
+  float dt_3 = dt_2 * dt;
+  float dt_4 = dt_3 * dt;
+  
+  // update transition matrix F_
+  MatrixXd F_ = MatrixXd(4, 4);
+  F_ << 1.0, 0.0, dt, 0.0, 
+          0.0, 1.0, 0.0, dt, 
+          0.0, 0.0, 1.0, 0.0, 
+          0.0, 0.0, 0.0, 1.0;
+  ekf_.F_ = F_;
+
+  // set the acceleration noise components
+  float noise_ax = 9;
+  float noise_ay = 9;
+  // update covariance matrix Q
+  MatrixXd Q_ = MatrixXd(4, 4);
+  Q_ << dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
+        0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
+        dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
+        0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
+  ekf_.Q_ = Q_;
 
   ekf_.Predict();
 
